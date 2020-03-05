@@ -1,37 +1,31 @@
 import numpy as np
 
-from util import generate_training_examples
+from sol_autodiff.grad import grad
+from sol_autodiff.wrapped_functions import multiply, subtract, matvecmul, mean
+from sol_linear_regression import numerical_grad
 
 
-def numerical_grad(loss_fn, weights, x, y_gold, dw):
-    loss = loss_fn(weights, x, y_gold)
+def generate_features(num_examples, num_features):
+    x = np.random.random((num_examples, num_features + 1))
+    x[:, -1] = 1.0
+    return x
 
-    grad = np.zeros_like(weights, dtype=np.float)
-    for i in range(len(weights)):
-        weights[i] += dw
-        dloss = loss_fn(weights, x, y_gold) - loss
-        weights[i] -= dw
-        grad[i] = dloss / dw
 
-    return grad
+def generate_training_examples(num_examples, coeffs, sigma):
+    x = generate_features(num_examples, len(coeffs) - 1)
+    y = np.matmul(x, coeffs) + np.random.normal(0, sigma, num_examples)
+    return x, y
 
 
 def l2_loss(weights, x, y_gold):
     y_pred = predict(weights, x)
-    diff = np.subtract(y_pred, y_gold)
-    loss = np.multiply(diff, diff)
-    return np.mean(loss, axis=0)
-
-
-def loss_grad(weights, x, y_gold):
-    y_pred = predict(weights, x)
-    diff = y_pred - y_gold
-    coeff_grad = np.mean(2 * diff[..., np.newaxis] * x, axis=0)
-    return coeff_grad
+    diff = subtract(y_pred, y_gold)
+    loss = multiply(diff, diff)
+    return mean(loss)
 
 
 def predict(weights, x):
-    return np.matmul(x, weights)
+    return matvecmul(x, weights)
 
 
 if __name__ == '__main__':
@@ -43,7 +37,8 @@ if __name__ == '__main__':
 
     print("=" * 20)
     print("gradient check...")
-    gg = loss_grad(weights, x, y_gold)
+    loss_grad_fn = grad(l2_loss)
+    gg = loss_grad_fn(weights, x, y_gold)
     ng = numerical_grad(l2_loss, weights, x, y_gold, dw=1e-6)
     mean_rel_diff = 2.0 * np.mean(np.abs(gg - ng) / np.abs(gg + ng))
     print(f"rel_diff = {mean_rel_diff}")
@@ -53,7 +48,7 @@ if __name__ == '__main__':
     num_steps = 5000
     num_print = 100
     for i in range(num_steps):
-        weights -= step_size * loss_grad(weights, x, y_gold)
+        weights -= step_size * loss_grad_fn(weights, x, y_gold)
         if i % num_print == 0:
             print(f"i={i:d}, loss={l2_loss(weights, x, y_gold):.6e}")
 
