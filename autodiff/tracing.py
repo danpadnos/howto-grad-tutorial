@@ -14,7 +14,7 @@ class Function:
 class Node:
     def __init__(self, value, recipe):
         self.value = value
-        self.recipe = recipe
+        self.recipe = recipe  # tuple of (Function, arg values, kwargs, parent nodes)
 
     def parents(self):
         return [p for i, p in self.recipe[-1]]
