@@ -1,31 +1,16 @@
 import numpy as np
 
+from util import generate_training_examples
 from sol_autodiff.grad import grad
 from sol_autodiff.wrapped_functions import multiply, subtract, matvecmul, mean
 from sol_linear_regression import numerical_grad
 
 
-def generate_features(num_examples, num_features):
-    x = np.random.random((num_examples, num_features + 1))
-    x[:, -1] = 1.0
-    return x
-
-
-def generate_training_examples(num_examples, coeffs, sigma):
-    x = generate_features(num_examples, len(coeffs) - 1)
-    y = np.matmul(x, coeffs) + np.random.normal(0, sigma, num_examples)
-    return x, y
-
-
 def l2_loss(weights, x, y_gold):
-    y_pred = predict(weights, x)
+    y_pred = matvecmul(x, weights)
     diff = subtract(y_pred, y_gold)
     loss = multiply(diff, diff)
     return mean(loss)
-
-
-def predict(weights, x):
-    return matvecmul(x, weights)
 
 
 if __name__ == '__main__':
