@@ -14,7 +14,7 @@ class Function:
 
         result_value = self.wrapped(*argvals, **kwargs)
         if parents:
-            return Node(value=result_value, recipe=(self, argvals, kwargs, parents))
+            return Node(value=result_value, recipe=(self, argvals, kwargs), parents=parents)
         else:
             return result_value
 
@@ -23,15 +23,16 @@ class Function:
 
 
 class Node:
-    def __init__(self, value, recipe):
+    def __init__(self, value, recipe, parents):
         self.value = value
-        self.recipe = recipe
+        self.recipe = recipe  # tuple of (Function, arg values, kwargs)
+        self.parents = parents  # tuple of (argnum, function)
 
-    def parents(self):
-        return [p for i, p in self.recipe[-1]]
+    def parent_nodes(self):
+        return [p for i, p in self.parents]
 
     @classmethod
     def new_root(cls, value):
-        return cls(value=value, recipe=(None, (), {}, []))
+        return cls(value=value, recipe=(None, (), {}), parents=[])
 
 
