@@ -26,13 +26,13 @@ class Node:
     def __init__(self, value, recipe, parents):
         self.value = value
         self.recipe = recipe  # tuple of (Function, arg values, kwargs)
-        self.parents = parents  # tuple of (argnum, function)
+        self.parents = parents  # tuple of (argnum, Node)
 
     def parent_nodes(self):
         return [p for i, p in self.parents]
 
     @classmethod
-    def new_root(cls, value):
+    def make_root(cls, value):
         return cls(value=value, recipe=(None, (), {}), parents=[])
 
 

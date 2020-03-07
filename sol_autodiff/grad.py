@@ -11,9 +11,8 @@ def _substitute(tup, idx, value):
 
 def grad(fun, argnum=0):
     def grad_fun(*args, **kwargs):
-        start_node = Node.new_root(args[argnum])
-        unary_fun = lambda x: fun(*_substitute(args, argnum, x), **kwargs)
-        end_node = unary_fun(start_node)
+        start_node = Node.make_root(args[argnum])
+        end_node = fun(*_substitute(args, argnum, start_node), **kwargs)
         if end_node is None:
             return np.zeros_like(start_node.value)
         else:
@@ -22,15 +21,15 @@ def grad(fun, argnum=0):
 
 
 def backward(end_node):
-    outgrads = {end_node: 1.0}
+    node2grad = {end_node: 1.0}
     for node in toposort(end_node):
-        outgrad = outgrads.pop(node)
+        current_grad = node2grad.pop(node)
         fun, args, kwargs = node.recipe
         for argnum, parent in node.parents:
             vjp = fun.get_vjp(argnum)
-            parent_grad = vjp(outgrad, node.value, *args, **kwargs)
-            outgrads[parent] = outgrads.get(parent, 0) + parent_grad
-    return outgrad
+            parent_grad = vjp(current_grad, node.value, *args, **kwargs)
+            node2grad[parent] = node2grad.get(parent, 0.0) + parent_grad
+    return current_grad
 
 
 def toposort(end_node):
